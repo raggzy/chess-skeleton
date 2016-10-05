@@ -23,6 +23,7 @@ public class CLI {
 
     /**
      * Write the string to the output
+     *
      * @param str The string to write
      */
     private void writeOutput(String str) {
@@ -31,6 +32,7 @@ public class CLI {
 
     /**
      * Retrieve a string from the console, returning after the user hits the 'Return' key.
+     *
      * @return The input from the user, or an empty-length string if they did not type anything.
      */
     private String getInput() {
@@ -48,7 +50,11 @@ public class CLI {
 
         while (true) {
             showBoard();
-            writeOutput(gameState.getCurrentPlayer() + "'s Move");
+            if (gameState.isCheckMate()) {
+                writeOutput("Checkmate. Congrats to " + gameState.getCurrentPlayer().getOther());
+            } else {
+                writeOutput(gameState.getCurrentPlayer() + "'s Move");
+            }
 
             String input = getInput();
             if (input == null) {
@@ -64,13 +70,37 @@ public class CLI {
                 } else if (input.equals("board")) {
                     writeOutput("Current Game:");
                 } else if (input.equals("list")) {
-                    writeOutput("====> List Is Not Implemented (yet) <====");
+                    list();
                 } else if (input.startsWith("move")) {
-                    writeOutput("====> Move Is Not Implemented (yet) <====");
+                    String[] split = input.split(" ");
+                    if (split.length == 3) {
+                        try {
+                            Position from = new Position(split[1]);
+                            Position to = new Position(split[2]);
+                            move(new Move(from, to));
+                        } catch (Exception e) {
+                            writeOutput("Invalid move command. See help");
+                        }
+                    } else {
+                        writeOutput("Invalid move command. See help");
+                    }
                 } else {
                     writeOutput("I didn't understand that.  Type 'help' for a list of commands.");
                 }
             }
+        }
+    }
+
+    private void list() {
+        writeOutput(gameState.getCurrentPlayer() + "'s possible moves:");
+        for (Move move : gameState.getCurrentPlayerMoves()) {
+            writeOutput(move.toString());
+        }
+    }
+
+    private void move(Move move) {
+        if (!gameState.validateAndMove(move)) {
+            writeOutput("You entered not valid move of yours!");
         }
     }
 
@@ -96,7 +126,7 @@ public class CLI {
     /**
      * Display the board for the user(s)
      */
-    String getBoardAsString() {
+    private String getBoardAsString() {
         StringBuilder builder = new StringBuilder();
         builder.append(NEWLINE);
 
@@ -113,15 +143,15 @@ public class CLI {
     }
 
 
-    private void printSquares(int rowLabel, StringBuilder builder) {
-        builder.append(rowLabel);
+    private void printSquares(int row, StringBuilder builder) {
+        builder.append(Position.getRowLabel(row));
 
-        for (char c = Position.MIN_COLUMN; c <= Position.MAX_COLUMN; c++) {
-            Piece piece = gameState.getPieceAt(String.valueOf(c) + rowLabel);
+        for (int col = Position.MIN_COLUMN; col <= Position.MAX_COLUMN; col++) {
+            Piece piece = gameState.getPieceAt(new Position(col, row));
             char pieceChar = piece == null ? ' ' : piece.getIdentifier();
             builder.append(" | ").append(pieceChar);
         }
-        builder.append(" | ").append(rowLabel).append(NEWLINE);
+        builder.append(" | ").append(Position.getRowLabel(row)).append(NEWLINE);
     }
 
     private void printSeparator(StringBuilder builder) {
@@ -130,8 +160,8 @@ public class CLI {
 
     private void printColumnLabels(StringBuilder builder) {
         builder.append("   ");
-        for (char c = Position.MIN_COLUMN; c <= Position.MAX_COLUMN; c++) {
-            builder.append(" ").append(c).append("  ");
+        for (int col = Position.MIN_COLUMN; col <= Position.MAX_COLUMN; col++) {
+            builder.append(" ").append(Position.getColumnLabel(col)).append("  ");
         }
 
         builder.append(NEWLINE);

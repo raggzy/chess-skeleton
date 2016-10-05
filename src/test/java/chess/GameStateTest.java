@@ -3,8 +3,11 @@ package chess;
 import chess.pieces.Piece;
 import chess.pieces.Queen;
 import chess.pieces.Rook;
+import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static junit.framework.Assert.*;
 
@@ -23,9 +26,9 @@ public class GameStateTest {
     @Test
     public void testStartsEmpty() {
         // Make sure all the positions are empty
-        for (char col = Position.MIN_COLUMN; col <= Position.MAX_COLUMN; col++) {
+        for (int col = Position.MIN_COLUMN; col <= Position.MAX_COLUMN; col++) {
             for (int row = Position.MIN_ROW; row <= Position.MAX_ROW; row++) {
-                assertNull("All pieces should be empty", state.getPieceAt(String.valueOf(col) + row));
+                assertNull("All pieces should be empty", state.getPieceAt(new Position(col, row)));
             }
         }
     }
@@ -48,5 +51,20 @@ public class GameStateTest {
         Piece blackQueen = state.getPieceAt("d8");
         assertTrue("A queen should be at d8", blackQueen instanceof Queen);
         assertEquals("The queen at d8 should be owned by Black", Player.Black, blackQueen.getOwner());
+    }
+
+    @Test
+    public void testCurrentPlayerMoves() {
+        state.reset();
+        List<Move> currentPlayerMoves = state.getCurrentPlayerMoves();
+        Assert.assertTrue("White should be able to do e2e4", currentPlayerMoves.contains(new Move("e2", "e4")));
+    }
+
+    @Test
+    public void testMove() {
+        state.reset();
+        state.validateAndMove(new Move("e2", "e4"));
+        assertEquals("Now it shouldbe black turn", Player.Black, state.getCurrentPlayer());
+        Assert.assertTrue("Black shouldbe able to do b7b5", state.getCurrentPlayerMoves().contains(new Move("b7", "b5")));
     }
 }
